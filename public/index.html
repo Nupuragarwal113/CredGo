@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
+    <title>CredGo - Digital Time Bank</title>
+    <style>
+        /* Reset and Base Styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            background-color: #f0f4f8;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Navigation */
+        nav {
+            background-color: #1e40af;
+            padding: 15px 0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        nav .container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        nav a {
+            color: white;
+            text-decoration: none;
+            margin: 0 15px;
+            font-weight: bold;
+            transition: color 0.3s;
+        }
+
+        nav a:hover {
+            color: #93c5fd;
+        }
+
+        nav .logo {
+            font-size: 1.8em;
+            color: white;
+        }
+
+        /* Section Styles */
+        section {
+            padding: 40px 0;
+            min-height: 100vh;
+            display: none;
+        }
+
+        section.active {
+            display: block;
+        }
+
+        h1, h2 {
+            text-align: center;
+            color: #1e40af;
+            margin-bottom: 20px;
+        }
+
+        /* Home Section */
+        #home {
+            text-align: center;
+        }
+
+        #home p {
+            max-width: 600px;
+            margin: 0 auto 20px;
+            color: #555;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #1e40af;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+
+        .btn:hover {
+            background-color: #3b82f6;
+        }
+
+        /* Form Styles (Register/Login) */
+        .form-container {
+            max-width: 400px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 1em;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #1e40af;
+        }
+
+        .form-container .btn {
+            width: 100%;
+            text-align: center;
+        }
+
+        /* Dashboard Section */
+        .dashboard-card {
+            max-width: 500px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        .credit-badge {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #fef08a;
+            color: #1e40af;
+            font-size: 1.5em;
+            font-weight: bold;
+            border-radius: 50px;
+            margin: 10px 0;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        /* Services Section */
+        .services-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .service-card {
+            background-color: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s;
+        }
+
+        .service-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .service-card h3 {
+            color: #1e40af;
+            margin-bottom: 10px;
+        }
+
+        .service-card p {
+            color: #555;
+            font-size: 0.9em;
+        }
+
+        .add-service {
+            max-width: 400px;
+            margin: 0 auto 30px;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .add-service textarea {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            resize: vertical;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            nav .container {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            nav a {
+                margin: 10px 0;
+            }
+
+            .services-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav>
+        <div class="container">
+            <a href="#home" class="logo">CredGo</a>
+            <div>
+                <a href="#home">Home</a>
+                <a href="#services">Services</a>
+                <a href="#dashboard">Dashboard</a>
+                <a href="#register">Register</a>
+                <a href="#login">Login</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Home Section -->
+    <section id="home" class="active">
+        <div class="container">
+            <h1>Welcome to CredGo</h1>
+            <p>Exchange skills and services with time credits. Join our community of Retired Individuals, Stay-at-Home People, and Youngsters!</p>
+            <a href="#register" class="btn">Get Started</a>
+        </div>
+    </section>
+
+    <!-- Register Section -->
+    <section id="register">
+        <div class="container">
+            <h2>Register</h2>
+            <div class="form-container">
+                <form>
+                    <div class="form-group">
+                        <label for="reg-name">Name</label>
+                        <input type="text" id="reg-name" placeholder="Enter your name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="reg-email">Email</label>
+                        <input type="email" id="reg-email" placeholder="Enter your email" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="reg-password">Password</label>
+                        <input type="password" id="reg-password" placeholder="Enter your password" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="reg-group">User Group</label>
+                        <select id="reg-group">
+                            <option value="Youngsters">Youngsters</option>
+                            <option value="Retired">Retired Individuals</option>
+                            <option value="StayAtHome">Stay-at-Home People</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn">Register</button>
+                </form>
+            </div>
+        </div>
+    </section>
+
+    <!-- Login Section -->
+    <section id="login">
+        <div class="container">
+            <h2>Login</h2>
+            <div class="form-container">
+                <form>
+                    <div class="form-group">
+                        <label for="login-email">Email</label>
+                        <input type="email" id="login-email" placeholder="Enter your email" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="login-password">Password</label>
+                        <input type="password" id="login-password" placeholder="Enter your password" required>
+                    </div>
+                    <button type="submit" class="btn">Login</button>
+                </form>
+            </div>
+        </div>
+    </section>
+
+    <!-- Dashboard Section -->
+    <section id="dashboard">
+        <div class="container">
+            <h2>Dashboard</h2>
+            <div class="dashboard-card">
+                <h3>Welcome, User!</h3>
+                <p>Group: Youngsters</p>
+                <div class="credit-badge">Time Credits: 5 hrs</div>
+                <p>Email: user@example.com</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Services Section -->
+    <section id="services">
+        <div class="container">
+            <h2>Services</h2>
+            <div class="add-service">
+                <h3>Add New Service</h3>
+                <form>
+                    <div class="form-group">
+                        <label for="service-title">Title</label>
+                        <input type="text" id="service-title" placeholder="e.g., Tutoring" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="service-desc">Description</label>
+                        <textarea id="service-desc" placeholder="Describe your service" required></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="service-category">Category</label>
+                        <select id="service-category">
+                            <option value="Tutoring">Tutoring</option>
+                            <option value="Cooking">Cooking</option>
+                            <option value="Tech Support">Tech Support</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn">Post Service</button>
+                </form>
+            </div>
+            <div class="services-grid">
+                <div class="service-card">
+                    <h3>Math Tutoring</h3>
+                    <p>Offering algebra and calculus lessons for students.</p>
+                    <p><strong>By:</strong> John</p>
+                    <p><strong>Category:</strong> Tutoring</p>
+                </div>
+                <div class="service-card">
+                    <h3>Home Cooking</h3>
+                    <p>Prepare homemade meals for small gatherings.</p>
+                    <p><strong>By:</strong> Sarah</p>
+                    <p><strong>Category:</strong> Cooking</p>
+                </div>
+                <div class="service-card">
+                    <h3>Tech Support</h3>
+                    <p>Help with software setup and troubleshooting.</p>
+                    <p><strong>By:</strong> Alex</p>
+                    <p><strong>Category:</strong> Tech Support</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <script>
+        // Firebase configuration
+        // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+        // const firebaseConfig = {
+        // apiKey: "AIzaSyBqfIlxsHCb8_2anlAIzFJnqwFzpPchSdY",
+        // authDomain: "ramyaproj-160c6.firebaseapp.com",
+        // projectId: "ramyaproj-160c6",
+        // storageBucket: "ramyaproj-160c6.firebasestorage.app",
+        // messagingSenderId: "659184667669",
+        // appId: "1:659184667669:web:bc9097cbf4e101e4f3921c",
+        // measurementId: "G-WMRD0N8KHB"
+        // };
+        // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+        const firebaseConfig = {
+    apiKey: "AIzaSyCR6p2lUaeAPSc0g-uwOQVk7zG8G7hWL9U",
+    authDomain: "credgo-b9329.firebaseapp.com",
+    projectId: "credgo-b9329",
+    storageBucket: "credgo-b9329.firebasestorage.app",
+    messagingSenderId: "551660202557",
+    appId: "1:551660202557:web:6dd0f5842f4b1ca7e51854",
+    measurementId: "G-25J6ZGQG9Z"
+  };
+
+        // Initialize Firebase
+        const app = firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        // Current user data
+        let currentUser = null;
+        let userData = null;
+
+        // DOM Elements
+        const registerForm = document.querySelector('#register form');
+        const loginForm = document.querySelector('#login form');
+        const addServiceForm = document.querySelector('#services .add-service form');
+        const servicesGrid = document.querySelector('.services-grid');
+        const dashboardCard = document.querySelector('.dashboard-card');
+
+        // Simple JavaScript to handle section navigation
+        document.querySelectorAll('nav a').forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const targetId = link.getAttribute('href').substring(1);
+                document.querySelectorAll('section').forEach(section => {
+                    section.classList.remove('active');
+                });
+                document.getElementById(targetId).classList.add('active');
+            });
+        });
+        
+
+        // Auth State Listener
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                // User is signed in
+                currentUser = user;
+                fetchUserData(user.uid);
+                
+                // Show dashboard and services, hide auth sections
+                document.querySelectorAll('nav a').forEach(link => {
+                    if (link.getAttribute('href') === '#login' || link.getAttribute('href') === '#register') {
+                        link.style.display = 'none';
+                    } else {
+                        link.style.display = 'inline-block';
+                    }
+                });
+                
+                // Load services
+                loadServices();
+            } else {
+                // User is signed out
+                currentUser = null;
+                userData = null;
+                
+                // Show auth sections, hide dashboard
+                document.querySelectorAll('nav a').forEach(link => {
+                    if (link.getAttribute('href') === '#login' || link.getAttribute('href') === '#register') {
+                        link.style.display = 'inline-block';
+                    } else if (link.getAttribute('href') !== '#home' && link.getAttribute('href') !== '#services') {
+                        link.style.display = 'none';
+                    }
+                });
+                
+                // Redirect to home if on dashboard
+                if (window.location.hash === '#dashboard') {
+                    window.location.hash = '#home';
+                }
+            }
+        });
+
+        // Register Form Submission
+        registerForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const name = registerForm.querySelector('#reg-name').value;
+            const email = registerForm.querySelector('#reg-email').value;
+            const password = registerForm.querySelector('#reg-password').value;
+            const userGroup = registerForm.querySelector('#reg-group').value;
+            
+            try {
+                // Create user with email and password
+                const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+                
+                // Save additional user data to Firestore
+                await db.collection('users').doc(userCredential.user.uid).set({
+                    name,
+                    email,
+                    userGroup,
+                    timeCredits: 0,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                
+                // Clear form
+                registerForm.reset();
+                
+                // Redirect to dashboard
+                window.location.hash = '#dashboard';
+            } catch (error) {
+                alert(error.message);
+            }
+        });
+
+        // Login Form Submission
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const email = loginForm.querySelector('#login-email').value;
+            const password = loginForm.querySelector('#login-password').value;
+            
+            try {
+                await auth.signInWithEmailAndPassword(email, password);
+                
+                // Clear form
+                loginForm.reset();
+                
+                // Redirect to dashboard
+                window.location.hash = '#dashboard';
+            } catch (error) {
+                alert(error.message);
+            }
+        });
+
+        // Add Service Form Submission
+        addServiceForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            if (!currentUser) {
+                alert('Please login to add a service');
+                return;
+            }
+            
+            const title = addServiceForm.querySelector('#service-title').value;
+            const description = addServiceForm.querySelector('#service-desc').value;
+            const category = addServiceForm.querySelector('#service-category').value;
+            
+            try {
+                await db.collection('services').add({
+                    title,
+                    description,
+                    category,
+                    providerId: currentUser.uid,
+                    providerName: userData.name,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    status: 'available'
+                });
+                
+                // Clear form
+                addServiceForm.reset();
+                
+                // Reload services
+                loadServices();
+            } catch (error) {
+                alert(error.message);
+            }
+        });
+
+        // Fetch User Data
+        async function fetchUserData(userId) {
+            try {
+                const doc = await db.collection('users').doc(userId).get();
+                if (doc.exists) {
+                    userData = doc.data();
+                    updateDashboard();
+                }
+            } catch (error) {
+                console.error("Error fetching user data:", error);
+            }
+        }
+
+        // Update Dashboard
+        function updateDashboard() {
+            if (userData && dashboardCard) {
+                dashboardCard.innerHTML = `
+                    <h3>Welcome, ${userData.name}!</h3>
+                    <p>Group: ${userData.userGroup}</p>
+                    <div class="credit-badge">Time Credits: ${userData.timeCredits || 0} hrs</div>
+                    <p>Email: ${userData.email}</p>
+                    <button id="logout-btn" class="btn" style="margin-top: 20px;">Logout</button>
+                `;
+                
+                // Add logout event
+                document.getElementById('logout-btn').addEventListener('click', () => {
+                    auth.signOut();
+                    window.location.hash = '#home';
+                });
+            }
+        }
+
+        // Load Services
+        async function loadServices() {
+            try {
+                const snapshot = await db.collection('services')
+                    .where('status', '==', 'available')
+                    .orderBy('createdAt', 'desc')
+                    .get();
+                
+                servicesGrid.innerHTML = '';
+                
+                snapshot.forEach(doc => {
+                    const service = doc.data();
+                    servicesGrid.innerHTML += `
+                        <div class="service-card" data-id="${doc.id}">
+                            <h3>${service.title}</h3>
+                            <p>${service.description}</p>
+                            <p><strong>By:</strong> ${service.providerName}</p>
+                            <p><strong>Category:</strong> ${service.category}</p>
+                            ${currentUser && service.providerId !== currentUser.uid ? 
+                                <button class="btn request-btn" style="margin-top: 10px;">Request Service</button> : ''}
+                        </div>
+                    `;
+                });
+                
+                // Add event listeners to request buttons
+                document.querySelectorAll('.request-btn').forEach(btn => {
+                    btn.addEventListener('click', async (e) => {
+                        const serviceId = e.target.closest('.service-card').getAttribute('data-id');
+                        await requestService(serviceId);
+                    });
+                });
+            } catch (error) {
+                console.error("Error loading services:", error);
+            }
+        }
+
+        // Request Service
+        async function requestService(serviceId) {
+            if (!currentUser) {
+                alert('Please login to request a service');
+                return;
+            }
+            
+            try {
+                // In a real app, you'd have more complex logic here
+                // For now, we'll just mark the service as requested
+                await db.collection('services').doc(serviceId).update({
+                    status: 'requested',
+                    requestedBy: currentUser.uid,
+                    requestedByName: userData.name
+                });
+                
+                alert('Service requested successfully!');
+                loadServices();
+            } catch (error) {
+                alert(error.message);
+            }
+        }
+
+        // Initialize the app
+        document.addEventListener('DOMContentLoaded', () => {
+            // Check if we're coming back to a hash
+            if (window.location.hash) {
+                const targetId = window.location.hash.substring(1);
+                document.querySelectorAll('section').forEach(section => {
+                    section.classList.remove('active');
+                });
+                document.getElementById(targetId).classList.add('active');
+            }
+        });
+    </script>
+</body>
+</html>
